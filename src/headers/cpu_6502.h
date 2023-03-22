@@ -20,7 +20,7 @@ class cpu_6502 {
   void connectBus(Bus* _bus);
 
  private:
-  reg8_t a;
+  reg8_t acc;
   reg8_t x;
   reg8_t y;
   reg8_t status;
@@ -48,8 +48,8 @@ class cpu_6502 {
     cycles_t cycles = 0;
   };
 
-  void write(address_t addr, uint8_t data);
-  uint8_t read(address_t addr);
+  void write(address_t addr, reg8_t data);
+  reg8_t read(address_t addr);
 
   reg8_t getFlag(FLAGS flag);
   void setFlag(FLAGS flag, bool set);
@@ -80,20 +80,30 @@ class cpu_6502 {
 
   cycles_t XXX();
 
+  inline void pushProgCounterToStack();
+  inline void setLogicalFlags(uint8_t result);
+  inline void branch();
+  inline void handleInterrupt();
+
   void clock();
   void reset();
   void irq();
   void nmi();
 
-  uint8_t fetch();
-  uint8_t fetched;  // Working input value to the ALU
+  reg8_t fetch();
+  reg8_t data;  // Working input value to the ALU
 
   address_t addr_abs;  // All used memory addresses ends up here
   address_t addr_rel;  // Represents absolute address following a branch
   uint8_t opcode;
   cycles_t cycles;  // Cycles left for current instruction
 
-  std::vector<Instruction> lookup;
+  static const address_t BASE_STACK_ADDRESS;
+  static const reg8_t RESET_STACK_POINTER;
+  static const address_t RESET_PC_POINTER;
+  static const address_t IRQ_PC_POINTER;
+  static const address_t NMI_PC_POINTER;
+  static const std::vector<Instruction> lookup;
 };
 
 #endif
