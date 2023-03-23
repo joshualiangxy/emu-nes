@@ -294,6 +294,70 @@ reg8_t cpu_6502::fetch() {
   return data;
 }
 
+cycles_t cpu_6502::BCC() {
+  if (getFlag(FLAGS::C) == 0) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BCS() {
+  if (getFlag(FLAGS::C) == 1) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BEQ() {
+  if (getFlag(FLAGS::Z) == 1) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BMI() {
+  if (getFlag(FLAGS::N) == 1) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BNE() {
+  if (getFlag(FLAGS::Z) == 0) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BPL() {
+  if (getFlag(FLAGS::N) == 0) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BVC() {
+  if (getFlag(FLAGS::V) == 0) {
+    branch();
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BVS() {
+  if (getFlag(FLAGS::V) == 1) {
+    branch();
+  }
+
+  return 0;
+}
+
 cycles_t cpu_6502::CLC() {
   setFlag(FLAGS::C, false);
   return 0;
