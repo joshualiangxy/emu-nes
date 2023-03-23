@@ -322,8 +322,8 @@ cycles_t cpu_6502::BIT() {
   fetch();
 
   setFlag(FLAGS::Z, acc & data);
-  setFlag(FLAGS::N, data << 7);
-  setFlag(FLAGS::V, data << 6);
+  setFlag(FLAGS::N, data & (1 << 7));
+  setFlag(FLAGS::V, data & (1 << 6));
 
   return 0;
 }
