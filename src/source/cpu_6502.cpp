@@ -318,6 +318,16 @@ cycles_t cpu_6502::BEQ() {
   return 0;
 }
 
+cycles_t cpu_6502::BIT() {
+  fetch();
+
+  setFlag(FLAGS::Z, acc & data);
+  setFlag(FLAGS::N, data << 7);
+  setFlag(FLAGS::V, data << 6);
+
+  return 0;
+}
+
 cycles_t cpu_6502::BMI() {
   if (getFlag(FLAGS::N) == 1) {
     branch();
@@ -338,6 +348,22 @@ cycles_t cpu_6502::BPL() {
   if (getFlag(FLAGS::N) == 0) {
     branch();
   }
+
+  return 0;
+}
+
+cycles_t cpu_6502::BRK() {
+  ++prog_counter;
+
+  setFlag(FLAGS::I, true);
+  pushProgCounterToStack();
+
+  setFlag(FLAGS::B, true);
+  pushToStack(status);
+  setFlag(FLAGS::B, false);
+
+  prog_counter = (address_t)read(IRQ_PC_POINTER) |
+                 ((address_t)read(IRQ_PC_POINTER + 1) << 8);
 
   return 0;
 }
@@ -375,6 +401,41 @@ cycles_t cpu_6502::CLI() {
 
 cycles_t cpu_6502::CLV() {
   setFlag(FLAGS::V, false);
+  return 0;
+}
+
+cycles_t cpu_6502::JMP() {
+  prog_counter = addr_abs;
+  return 0;
+}
+
+cycles_t cpu_6502::JSR() {
+  fetch();
+  pushProgCounterToStack();
+
+  prog_counter = addr_abs;
+  return 0;
+}
+
+cycles_t cpu_6502::NOP() {
+  if ((opcode & 0x0F) == 0x0C) {
+    return 1;
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::RTI() {
+  status = popFromStack();
+  status &= ~FLAGS::B;
+  status &= ~FLAGS::U;
+
+  prog_counter = popProgCounterFromStack();
+  return 0;
+}
+
+cycles_t cpu_6502::RTS() {
+  prog_counter = popProgCounterFromStack() + 1;
   return 0;
 }
 
