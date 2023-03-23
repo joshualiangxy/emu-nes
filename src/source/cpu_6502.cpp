@@ -96,7 +96,7 @@ inline void cpu_6502::handleInterrupt() {
   setFlag(FLAGS::U, 1);
   setFlag(FLAGS::I, 1);
 
-  write(BASE_STACK_ADDRESS + stack_pointer--, status);
+  pushToStack(status);
 
   address_t lo = read(addr_abs);
   address_t hi = ((address_t)read(addr_abs + 1)) << 8;
@@ -133,9 +133,22 @@ void cpu_6502::setFlag(FLAGS flag, bool set) {
  * Addressing Modes                               *
  **************************************************/
 
+inline void cpu_6502::pushToStack(reg8_t data) { write(BASE_STACK_ADDRESS + stack_pointer--, data); }
+
+inline reg8_t cpu_6502::popFromStack() {
+  return read(BASE_STACK_ADDRESS + ++stack_pointer);
+}
+
 inline void cpu_6502::pushProgCounterToStack() {
-  write(BASE_STACK_ADDRESS + stack_pointer--, (prog_counter >> 8) & 0x00FF);
-  write(BASE_STACK_ADDRESS + stack_pointer--, prog_counter & 0x00FF);
+  pushToStack((prog_counter >> 8) & 0x00FF);
+  pushToStack(prog_counter & 0x00FF);
+}
+
+inline address_t cpu_6502::popProgCounterFromStack() {
+  address_t prog_counter = (address_t)popFromStack();
+  prog_counter |= (address_t)popFromStack() << 8;
+
+  return prog_counter;
 }
 
 inline void cpu_6502::setLogicalFlags(uint8_t result) {

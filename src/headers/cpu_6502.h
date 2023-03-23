@@ -80,7 +80,12 @@ class cpu_6502 {
 
   cycles_t XXX();
 
+  inline void pushToStack(reg8_t data);
+  inline reg8_t popFromStack();
+
   inline void pushProgCounterToStack();
+  inline address_t popProgCounterFromStack();
+
   inline void setLogicalFlags(uint8_t result);
   inline void branch();
   inline void handleInterrupt();
