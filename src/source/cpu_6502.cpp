@@ -294,6 +294,44 @@ reg8_t cpu_6502::fetch() {
   return data;
 }
 
+cycles_t cpu_6502::ADC() {
+  fetch();
+  uint16_t result = (uint16_t)acc + (uint16_t)data + (uint16_t)getFlag(FLAGS::C);
+
+  acc = result & 0x00FF;
+
+  // overflow = NEG(accumulated XOR data) AND (accumulated XOR result)
+  setFlag(V, ~((uint16_t)acc ^ (uint16_t)data) & ((uint16_t)acc ^ result));
+  setFlag(C, result > 0x00FF);
+  setLogicalFlags(acc);
+
+  return 1;
+}
+
+cycles_t cpu_6502::AND() {
+  fetch();
+  acc &= data;
+
+  setLogicalFlags(acc);
+  return 1;
+}
+
+cycles_t cpu_6502::ASL() {
+  fetch();
+  uint16_t result = (uint16_t)data << 1;
+
+  setLogicalFlags(result & 0x00FF);
+  setFlag(FLAGS::C, result & 0xFF00);
+
+  if (lookup[opcode].addr_mode == IMP) {
+    acc = result & 0x00FF;
+  } else {
+    write(addr_abs, result & 0x00FF);
+  }
+
+  return 0;
+}
+
 cycles_t cpu_6502::BCC() {
   if (getFlag(FLAGS::C) == 0) {
     branch();
@@ -404,6 +442,88 @@ cycles_t cpu_6502::CLV() {
   return 0;
 }
 
+cycles_t cpu_6502::CMP() {
+  fetch();
+
+  uint16_t result = (uint16_t)acc - (uint16_t)data;
+  setFlag(FLAGS::C, acc >= data);
+  setLogicalFlags(result & 0x00FF);
+
+  return 1;
+}
+
+cycles_t cpu_6502::CPX() {
+  fetch();
+
+  uint16_t result = (uint16_t)x - (uint16_t)data;
+  setFlag(FLAGS::C, x >= data);
+  setLogicalFlags(result & 0x00FF);
+
+  return 0;
+}
+
+cycles_t cpu_6502::CPY() {
+  fetch();
+
+  uint16_t result = (uint16_t)y - (uint16_t)data;
+  setFlag(FLAGS::C, y >= data);
+  setLogicalFlags(result & 0x00FF);
+
+  return 0;
+}
+
+cycles_t cpu_6502::DEC() {
+  fetch();
+
+  uint16_t result = ((uint16_t)data - 1) & 0x00FF;
+  write(addr_abs, result);
+  setLogicalFlags(result);
+
+  return 0;
+}
+
+cycles_t cpu_6502::DEX() {
+  setLogicalFlags(--x);
+
+  return 0;
+}
+
+cycles_t cpu_6502::DEY() {
+  setLogicalFlags(--y);
+
+  return 0;
+}
+
+cycles_t cpu_6502::EOR() {
+  fetch();
+  acc ^= data;
+
+  setLogicalFlags(acc);
+  return 1;
+}
+
+cycles_t cpu_6502::INC() {
+  fetch();
+
+  uint16_t result = ((uint16_t)data + 1) & 0x00FF;
+  write(addr_abs, result);
+  setLogicalFlags(result);
+
+  return 0;
+}
+
+cycles_t cpu_6502::INX() {
+  setLogicalFlags(++x);
+
+  return 0;
+}
+
+cycles_t cpu_6502::INY() {
+  setLogicalFlags(++y);
+
+  return 0;
+}
+
 cycles_t cpu_6502::JMP() {
   prog_counter = addr_abs;
   return 0;
@@ -417,9 +537,65 @@ cycles_t cpu_6502::JSR() {
   return 0;
 }
 
+cycles_t cpu_6502::LSR() {
+  fetch();
+  uint8_t result = data >> 1;
+
+  setLogicalFlags(result);
+  setFlag(FLAGS::C, data & 0x01);
+
+  if (lookup[opcode].addr_mode == IMP) {
+    acc = result;
+  } else {
+    write(addr_abs, result);
+  }
+
+  return 0;
+}
+
 cycles_t cpu_6502::NOP() {
   if ((opcode & 0x0F) == 0x0C) {
     return 1;
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::ORA() {
+  fetch();
+  acc |= data;
+
+  setLogicalFlags(acc);
+  return 1;
+}
+
+cycles_t cpu_6502::ROL() {
+  fetch();
+  uint16_t result = (uint16_t)data << 1 | getFlag(FLAGS::C);
+
+  setLogicalFlags(result & 0x00FF);
+  setFlag(FLAGS::C, result & 0xFF00);
+
+  if (lookup[opcode].addr_mode == IMP) {
+    acc = result & 0x00FF;
+  } else {
+    write(addr_abs, result & 0x00FF);
+  }
+
+  return 0;
+}
+
+cycles_t cpu_6502::ROR() {
+  fetch();
+  uint8_t result = data >> 1 | (getFlag(FLAGS::C) << 7);
+
+  setLogicalFlags(result);
+  setFlag(FLAGS::C, data & 0x01);
+
+  if (lookup[opcode].addr_mode == IMP) {
+    acc = result;
+  } else {
+    write(addr_abs, result);
   }
 
   return 0;
@@ -437,6 +613,23 @@ cycles_t cpu_6502::RTI() {
 cycles_t cpu_6502::RTS() {
   prog_counter = popProgCounterFromStack() + 1;
   return 0;
+}
+
+cycles_t cpu_6502::SBC() {
+  fetch();
+
+  // data XOR 0x00FF => -data - 1
+  uint16_t value = ((uint16_t)data) ^ 0x00FF;
+  uint16_t result = (uint16_t)acc + value + (uint16_t)getFlag(FLAGS::C);
+
+  acc = result & 0x00FF;
+
+  // overflow = (accumulated XOR data) AND NEG(data XOR result)
+  setFlag(V, ((uint16_t)acc ^ (uint16_t)data) & ~((uint16_t)data ^ result));
+  setFlag(C, result & 0xFF00);
+  setLogicalFlags(acc);
+
+  return 1;
 }
 
 cycles_t cpu_6502::SEC() {
