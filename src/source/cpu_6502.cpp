@@ -537,6 +537,30 @@ cycles_t cpu_6502::JSR() {
   return 0;
 }
 
+cycles_t cpu_6502::LDA() {
+  fetch();
+  acc = data;
+
+  setLogicalFlags(acc);
+  return 1;
+}
+
+cycles_t cpu_6502::LDX() {
+  fetch();
+  x = data;
+
+  setLogicalFlags(x);
+  return 1;
+}
+
+cycles_t cpu_6502::LDY() {
+  fetch();
+  y = data;
+
+  setLogicalFlags(y);
+  return 1;
+}
+
 cycles_t cpu_6502::LSR() {
   fetch();
   uint8_t result = data >> 1;
@@ -567,6 +591,27 @@ cycles_t cpu_6502::ORA() {
 
   setLogicalFlags(acc);
   return 1;
+}
+
+cycles_t cpu_6502::PHA() {
+  pushToStack(acc);
+  return 0;
+}
+
+cycles_t cpu_6502::PHP() {
+  pushToStack(status | FLAGS::U | FLAGS::B);
+  return 0;
+}
+
+cycles_t cpu_6502::PLA() {
+  acc = popFromStack();
+  setLogicalFlags(acc);
+  return 0;
+}
+
+cycles_t cpu_6502::PLP() {
+  status = popFromStack();
+  return 0;
 }
 
 cycles_t cpu_6502::ROL() {
@@ -646,3 +691,55 @@ cycles_t cpu_6502::SEI() {
   setFlag(FLAGS::I, true);
   return 0;
 }
+
+cycles_t cpu_6502::STA() {
+  write(addr_abs, acc);
+  return 0;
+}
+
+cycles_t cpu_6502::STX() {
+  write(addr_abs, x);
+  return 0;
+}
+
+cycles_t cpu_6502::STY() {
+  write(addr_abs, y);
+  return 0;
+}
+
+cycles_t cpu_6502::TAX() {
+  x = acc;
+  setLogicalFlags(x);
+  return 0;
+}
+
+cycles_t cpu_6502::TAY() {
+  y = acc;
+  setLogicalFlags(y);
+  return 0;
+}
+
+cycles_t cpu_6502::TSX() {
+  x = stack_pointer;
+  setLogicalFlags(x);
+  return 0;
+}
+
+cycles_t cpu_6502::TXA() {
+  acc = x;
+  setLogicalFlags(acc);
+  return 0;
+}
+
+cycles_t cpu_6502::TXS() {
+  stack_pointer = x;
+  return 0;
+}
+
+cycles_t cpu_6502::TYA() {
+  acc = y;
+  setLogicalFlags(acc);
+  return 0;
+}
+
+cycles_t cpu_6502::XXX() { return 0; }
